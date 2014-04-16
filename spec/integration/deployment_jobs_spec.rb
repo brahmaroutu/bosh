@@ -21,6 +21,24 @@ describe 'deployment job control', type: :integration do
     expect_to_have_running_job_indices(%w(foobar/0 foobar/1 foobar/2 foobar/3))
   end
 
+  it 'allows to scale up and down a job via manifest with resource pool size set to auto' do
+    manifest_hash = Bosh::Spec::Deployments.simple_manifest
+    manifest_hash['resource_pools'].first['size'] = 'auto'
+    manifest_hash['jobs'].first['instances'] = 3
+    deploy_simple(manifest_hash: manifest_hash)
+    expect_to_have_running_job_indices(%w(foobar/0 foobar/1 foobar/2))
+
+    manifest_hash['resource_pools'].first['size'] = 'auto'
+    manifest_hash['jobs'].first['instances'] = 2
+    deploy_simple_manifest(manifest_hash: manifest_hash)
+    expect_to_have_running_job_indices(%w(foobar/0 foobar/1))
+
+    manifest_hash['resource_pools'].first['size'] = 'auto'
+    manifest_hash['jobs'].first['instances'] = 4
+    deploy_simple_manifest(manifest_hash: manifest_hash)
+    expect_to_have_running_job_indices(%w(foobar/0 foobar/1 foobar/2 foobar/3))
+  end
+  
   it 'allows to remove previously deployed job and add new job at the same time via a manifest' do
     manifest_hash = Bosh::Spec::Deployments.simple_manifest
     manifest_hash['jobs'].first['name'] = 'fake-name1'

@@ -35,13 +35,20 @@ module Bosh::Director
       # @return [Integer] Number of active resource pool VMs
       attr_reader :active_vm_count
 
+      def size
+        @size == "auto" ? @required_capacity : @size
+      end
+
       # @param [DeploymentPlan] deployment_plan Deployment plan
       # @param [Hash] spec Raw resource pool spec from the deployment manifest
       def initialize(deployment_plan, spec)
         @deployment_plan = deployment_plan
 
         @name = safe_property(spec, "name", :class => String)
-        @size = safe_property(spec, "size", :class => Integer)
+        @size = safe_property(spec, "size")
+        unless @size.is_a?(Integer) or @size == "auto"
+          invalid_type("size", "Integer or 'auto'", @size)
+        end
 
         @cloud_properties =
           safe_property(spec, "cloud_properties", :class => Hash)
@@ -105,7 +112,7 @@ module Bosh::Director
       # this resource pool to a desired size
       # @return [Integer]
       def missing_vm_count
-        @size - @active_vm_count - @idle_vms.size
+        size - @active_vm_count - @idle_vms.size
       end
 
       # Adds a new VM to a list of managed idle VMs
@@ -140,10 +147,10 @@ module Bosh::Director
       # @return [void]
       def reserve_capacity(n)
         @required_capacity += n
-        if @required_capacity > @size
+        if @required_capacity > size
           raise ResourcePoolNotEnoughCapacity,
                 "Resource pool `#{@name}' is not big enough: " +
-                "#{@required_capacity} VMs needed, capacity is #{@size}"
+                "#{@required_capacity} VMs needed, capacity is #{size}"
         end
       end
 

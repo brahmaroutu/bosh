@@ -92,6 +92,23 @@ describe Bosh::Director::DeploymentPlan::ResourcePool do
     }.to raise_error(BD::ResourcePoolNotEnoughCapacity)
   end
 
+  it "dynamically allocates capacity if size set to auto" do
+    spec = valid_spec.merge("size" => "auto")
+    network = double(BD::DeploymentPlan::Network)
+    plan = double(BD::DeploymentPlan)
+    plan.stub(:network).with("test").and_return(network)
+    rp = make(plan,spec)
+    
+    rp.size.should == 0
+    rp.missing_vm_count.should == 0
+    
+    rp.reserve_capacity(1)
+    rp.missing_vm_count.should == 1
+
+    rp.reserve_capacity(22)
+    rp.missing_vm_count.should == 23
+  end
+
   describe "processing idle VMs" do
     it "creates idle vm objects for missing idle VMs" do
       network.stub(:reserve!)

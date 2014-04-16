@@ -31,6 +31,20 @@ describe 'deployment integrations', type: :integration do
     expect(times['foobar/2']['started']).to be >= [times['foobar/0']['finished'], times['foobar/1']['finished']].min
   end
 
+  it 'set resource pool size to auto' do
+    manifest_hash = Bosh::Spec::Deployments.simple_manifest
+    manifest_hash['releases'].first['version'] = 'latest'
+    manifest_hash['update']['canaries'] = 0
+    manifest_hash['properties'] = { 'test_property' => 2 }
+    manifest_hash['update']['max_in_flight'] = 2
+    output = deploy_simple(manifest_hash: manifest_hash)
+    task_id = get_task_id(output)
+    times = start_and_finish_times_for_job_updates('last')
+    expect(times['foobar/1']['started']).to be >= times['foobar/0']['started']
+    expect(times['foobar/1']['started']).to be < times['foobar/0']['finished']
+    expect(times['foobar/2']['started']).to be >= [times['foobar/0']['finished'], times['foobar/1']['finished']].min
+  end
+
   it 'spawns a job and then successfully cancel it' do
     deploy_result = deploy_simple(no_track: true)
     task_id = get_task_id(deploy_result, 'running')

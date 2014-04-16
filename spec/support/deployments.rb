@@ -75,5 +75,46 @@ module Bosh::Spec
         }]
       )
     end
+    def self.simple_manifest_with_size_auto
+      minimal_manifest.merge(
+        'name' => 'simple',
+
+        'releases' => [{
+          'name'    => 'bosh-release',
+          'version' => '0.1-dev'
+        }],
+
+        'networks' => [{
+          'name'    => 'a',
+          'subnets' => [{
+            'range'    => '192.168.1.0/24',
+            'gateway'  => '192.168.1.1',
+            'dns'      => ['192.168.1.1', '192.168.1.2'],
+            'static'   => ['192.168.1.10'],
+            'reserved' => [],
+            'cloud_properties' => {},
+          }]
+        }],
+
+        'resource_pools' => [{
+          'name' => 'a',
+          'size' => 'auto',
+          'cloud_properties' => {},
+          'network'   => 'a',
+          'stemcell'  => {
+            'name'    => 'ubuntu-stemcell',
+            'version' => '1'
+          }
+        }],
+
+        'jobs' => [{
+          'name'          => 'foobar',
+          'template'      => 'foobar',
+          'resource_pool' => 'a',
+          'instances'     => 3,
+          'networks'      => [{ 'name' => 'a' }]
+        }]
+      )
+    end    
   end
 end
